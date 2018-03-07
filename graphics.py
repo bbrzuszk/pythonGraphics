@@ -223,7 +223,7 @@ class GraphWin(tk.Canvas):
         self.items = []
         self.mouseX = None
         self.mouseY = None
-        self.keys = set()
+        self.keys = set()                                       #DJC: Added 03.05.18.11.33
         self.bind("<Button-1>", self._onClick)
         self.bind_all("<Key>", self._onKey)
         self.bind_all('<KeyPress>', self.keyPressHandler)       #DJC: Added 03.05.18.11.33
@@ -401,12 +401,9 @@ class GraphWin(tk.Canvas):
 # DJC: 03.05.18.11.37
     def keyPressHandler(self, e):
         self.keys.add(e.keysym)
-        self.update()
-        print(self.keys)
 
     def keyReleaseHandler(self, e):
         self.keys.remove(e.keysym)
-        self.update()
 
     def checkKeys(self):
         return self.keys
@@ -649,6 +646,24 @@ class Oval(_BBox):
         x2, y2 = canvas.toScreen(p2.x, p2.y)
         return canvas.create_oval(x1, y1, x2, y2, options)
 
+class Arc(_BBox):
+    def __init__(self, p1, p2, startAngle, rotation, style="PIESLICE"):
+        _BBox.__init__(self, p1, p2)
+        self.startAngle = startAngle
+        self.rotation = rotation
+        if(style == "PIESLICE"):
+            self.style = tk.PIESLICE
+        elif(style == "CHORD"):
+            self.style = tk.CHORD
+        else:
+            self.style = tk.ARC
+
+    def _draw(self, canvas, options):
+        p1 = self.p1
+        p2 = self.p2
+        x1, y1 = canvas.toScreen(p1.x, p1.y)
+        x2, y2 = canvas.toScreen(p2.x, p2.y)
+        return canvas.create_arc(x1, y1, x2, y2, options, style=self.style, start=self.startAngle, extent=self.rotation)
 
 class Circle(Oval):
     def __init__(self, center, radius):
