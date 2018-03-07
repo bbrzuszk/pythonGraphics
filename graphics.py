@@ -647,16 +647,27 @@ class Oval(_BBox):
         return canvas.create_oval(x1, y1, x2, y2, options)
 
 class Arc(_BBox):
-    def __init__(self, p1, p2, startAngle, rotation, style="PIESLICE"):
+    """Creates an arc, sector, or chord given opposite corners of a bounding box
+    a starting angle, and a rotation in degrees"""
+    def __init__(self, p1, p2, startAngle, rotation, style="SECTOR"):
         _BBox.__init__(self, p1, p2)
         self.startAngle = startAngle
         self.rotation = rotation
-        if(style == "PIESLICE"):
+        self.styleAsString = style.upper()
+        if(self.styleAsString == "SECTOR"):
             self.style = tk.PIESLICE
-        elif(style == "CHORD"):
+        elif(self.styleAsString == "CHORD"):
             self.style = tk.CHORD
         else:
             self.style = tk.ARC
+
+    def __repr__(self):
+        return "Arc({},{},{},{})".format(str(self.p1), str(self.p2), str(self.startAngle), str(self.rotation))
+
+    def clone(self):
+        other = Arc(self.p1, self.p2, self.startAngle, self.rotation, self.styleAsString)
+        other.config = self.config.copy()
+        return other
 
     def _draw(self, canvas, options):
         p1 = self.p1
