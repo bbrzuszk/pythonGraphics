@@ -625,7 +625,35 @@ class Rectangle(_BBox):
         other = Rectangle(self.p1, self.p2)
         other.config = self.config.copy()
         return other
-
+class RoundedRectangle(Rectangle):
+    def __init__(self, p1, p2, radius = 25, **kwargs):
+        super(RoundedRectangle, self).__init__(p1, p2)
+        x1 = p1.x
+        x2 = p2.x
+        y1 = p1.y
+        y2 = p2.y
+        self.points = [x1 + radius, y1,
+                  x1 + radius, y1,
+                  x2 - radius, y1,
+                  x2 - radius, y1,
+                  x2, y1,
+                  x2, y1 + radius,
+                  x2, y1 + radius,
+                  x2, y2 - radius,
+                  x2, y2 - radius,
+                  x2, y2,
+                  x2 - radius, y2,
+                  x2 - radius, y2,
+                  x1 + radius, y2,
+                  x1 + radius, y2,
+                  x1, y2,
+                  x1, y2 - radius,
+                  x1, y2 - radius,
+                  x1, y1 + radius,
+                  x1, y1 + radius,
+                  x1, y1]
+    def _draw(self, canvas, options):
+        return canvas.create_polygon(self.points, options, smooth=True)
 
 class Oval(_BBox):
     def __init__(self, p1, p2):
