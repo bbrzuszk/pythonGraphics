@@ -428,7 +428,7 @@ class Transform:
 # Default values for various item configuration options. Only a subset of
 #   keys may be present in the configuration dictionary for a given item
 DEFAULT_CONFIG = {"fill": "",
-                  "activefill":"",
+                  "activefill":"",  #BB added ActiveFill 3/9/2018
                   "outline": "black",
                   "width": "1",
                   "arrow": "none",
@@ -618,18 +618,21 @@ class Rectangle(_BBox):
         other.config = self.config.copy()
         return other
 
-class RoundedRectangle(Rectangle):
+class RoundedRectangle(Rectangle): # BB added 3/9/2018
+    """Creates a rectangle with rounded corners of a given radius"""
     def __init__(self, p1, p2, radius = 25):
         super(RoundedRectangle, self).__init__(p1, p2)
         x1 = p1.x
         x2 = p2.x
         y1 = p1.y
         y2 = p2.y
+        self.radius = radius
+        #self.points is a list of points that contain rounded corners
         self.points = [x1 + radius, y1,
-                  x1 + radius, y1,
+                  x1 + radius, y1, #segment between x1+radius, y1 and x2-radius , y1 is not rounded
                   x2 - radius, y1,
                   x2 - radius, y1,
-                  x2, y1,
+                  x2, y1,          #defines the corner that we create a curve out too between adjacent points
                   x2, y1 + radius,
                   x2, y1 + radius,
                   x2, y2 - radius,
@@ -645,6 +648,15 @@ class RoundedRectangle(Rectangle):
                   x1, y1 + radius,
                   x1, y1 + radius,
                   x1, y1]
+
+    def __repr__(self):
+        return "Rounded Rectangle({}, {}, {})".format(str(self.p1), str(self.p2), str(self.radius))
+
+    def clone(self):
+        other = RoundedRectangle(self.p1, self.p2, self.radius)
+        other.config = self.config.copy()
+        return other
+
     def _draw(self, canvas, options):
         return canvas.create_polygon(self.points, options, smooth=True)
 
@@ -749,7 +761,7 @@ class Polygon(GraphicsObject):
         if len(points) == 1 and type(points[0]) == type([]):
             points = points[0]
         self.points = list(map(Point.clone, points))
-        GraphicsObject.__init__(self, ["outline", "width", "fill", "activefill"]) #added activefill
+        GraphicsObject.__init__(self, ["outline", "width", "fill", "activefill"]) #BB added activefill 3/9/2018
 
     def __repr__(self):
         return "Polygon" + str(tuple(p for p in self.points))
