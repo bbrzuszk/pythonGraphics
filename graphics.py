@@ -1,40 +1,31 @@
-﻿# graphics.py
+# graphics.py
 """Simple object oriented graphics library
-
 The library is designed to make it very easy for novice programmers to
 experiment with computer graphics in an object oriented fashion. It is
 written by John Zelle for use with the book "Python Programming: An
 Introduction to Computer Science" (Franklin, Beedle & Associates).
-
 LICENSE: This is open-source software released under the terms of the
 GPL (http://www.gnu.org/licenses/gpl.html).
-
 PLATFORMS: The package is a wrapper around Tkinter and should run on
 any platform where Tkinter is available.
-
 INSTALLATION: Put this file somewhere where Python can see it.
-
 OVERVIEW: There are two kinds of objects in the library. The GraphWin
 class implements a window where drawing can be done and various
 GraphicsObjects are provided that can be drawn into a GraphWin. As a
 simple example, here is a complete program to draw a circle of radius
 10 centered in a 100x100 window:
-
 --------------------------------------------------------------------
 from graphics import *
-
 def main():
     win = GraphWin("My Circle", 100, 100)
     c = Circle(Point(50,50), 10)
     c.draw(win)
     win.getMouse() # Pause to view result
     win.close()    # Close window when done
-
 main()
 --------------------------------------------------------------------
 GraphWin objects support coordinate transformation through the
 setCoords method and mouse and keyboard interaction methods.
-
 The library provides the following graphical objects:
     Point
     Line
@@ -45,16 +36,13 @@ The library provides the following graphical objects:
     Text
     Entry (for text-based input)
     Image
-
 Various attributes of graphical objects can be set such as
 outline-color, fill-color and line-width. Graphical objects also
 support moving and hiding for animation effects.
-
 The library also provides a very simple class for pixel-based image
 manipulation, Pixmap. A pixmap can be loaded from a file and displayed
 using an Image object. Both getPixel and setPixel methods are provided
 for manipulating the image.
-
 DOCUMENTATION: For complete documentation, see Chapter 4 of "Python
 Programming: An Introduction to Computer Science" by John Zelle,
 published by Franklin, Beedle & Associates.  Also see
@@ -440,6 +428,7 @@ class Transform:
 # Default values for various item configuration options. Only a subset of
 #   keys may be present in the configuration dictionary for a given item
 DEFAULT_CONFIG = {"fill": "",
+                  "activefill":"",
                   "outline": "black",
                   "width": "1",
                   "arrow": "none",
@@ -481,6 +470,9 @@ class GraphicsObject:
     def setWidth(self, width):
         """Set line weight to width"""
         self._reconfig("width", width)
+
+    def setActiveFill(self, color):         #Added By BB 3/8
+        self._reconfig("activefill", color)
 
     def draw(self, graphwin):
 
@@ -586,7 +578,7 @@ class _BBox(GraphicsObject):
     # Internal base class for objects represented by bounding box
     # (opposite corners) Line segment is a degenerate case.
 
-    def __init__(self, p1, p2, options=["outline", "width", "fill"]):
+    def __init__(self, p1, p2, options=["outline", "width", "fill","activefill"]): #BB added activefill
         GraphicsObject.__init__(self, options)
         self.p1 = p1.clone()
         self.p2 = p2.clone()
@@ -625,8 +617,9 @@ class Rectangle(_BBox):
         other = Rectangle(self.p1, self.p2)
         other.config = self.config.copy()
         return other
+
 class RoundedRectangle(Rectangle):
-    def __init__(self, p1, p2, radius = 25, **kwargs):
+    def __init__(self, p1, p2, radius = 25):
         super(RoundedRectangle, self).__init__(p1, p2)
         x1 = p1.x
         x2 = p2.x
@@ -756,7 +749,7 @@ class Polygon(GraphicsObject):
         if len(points) == 1 and type(points[0]) == type([]):
             points = points[0]
         self.points = list(map(Point.clone, points))
-        GraphicsObject.__init__(self, ["outline", "width", "fill"])
+        GraphicsObject.__init__(self, ["outline", "width", "fill", "activefill"]) #added activefill
 
     def __repr__(self):
         return "Polygon" + str(tuple(p for p in self.points))
@@ -983,7 +976,6 @@ class Image(GraphicsObject):
     def getPixel(self, x, y):
         """Returns a list [r,g,b] with the RGB color values for pixel (x,y)
         r,g,b are in range(256)
-
         """
 
         value = self.img.get(x, y)
@@ -996,14 +988,12 @@ class Image(GraphicsObject):
 
     def setPixel(self, x, y, color):
         """Sets pixel (x,y) to the given color
-
         """
         self.img.put("{" + color + "}", (x, y))
 
     def save(self, filename):
         """Saves the pixmap image to filename.
         The format for the save image is determined from the filname extension.
-
         """
 
         path, name = os.path.split(filename)
