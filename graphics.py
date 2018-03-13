@@ -1,4 +1,4 @@
-# graphics.py
+﻿# graphics.py
 """Simple object oriented graphics library
 The library is designed to make it very easy for novice programmers to
 experiment with computer graphics in an object oriented fashion. It is
@@ -213,7 +213,7 @@ class GraphWin(tk.Canvas):
         self.mouseY = None
         self.keys = set()                                       #DJC: Added 03.05.18.11.33
         self.bind("<Button-1>", self._onClick)
-        self.bind_all("<Key>", self._onKey)
+#        self.bind_all("<Key>", self._onKey)
         self.bind_all('<KeyPress>', self.keyPressHandler)       #DJC: Added 03.05.18.11.33
         self.bind_all('<KeyRelease>', self.keyReleaseHandler)   #DJC: Added 03.05.18.11.33
         self.height = int(height)
@@ -389,6 +389,7 @@ class GraphWin(tk.Canvas):
 # DJC: 03.05.18.11.37
     def keyPressHandler(self, e):
         self.keys.add(e.keysym)
+        self._onKey(e) # BB 3/2018 fixes getKey and checkKey bug
 
     def keyReleaseHandler(self, e):
         self.keys.remove(e.keysym)
