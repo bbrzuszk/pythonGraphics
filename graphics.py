@@ -395,6 +395,7 @@ class GraphWin(tk.Canvas):
         self.keys.remove(e.keysym)
 
     def checkKeys(self):
+        self.update() # BB 3/2018 Added to Fix neccessary update in loop
         return self.keys
 # DJC: end
 
