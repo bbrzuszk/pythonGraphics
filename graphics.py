@@ -339,10 +339,10 @@ class GraphWin(tk.Canvas):
         if self.isClosed():
             raise GraphicsError("checkKey in closed window")
         self.update()
-        key = self.lastKey
-        self.lastKey = ""
-        return key
-
+       # key = self.lastKey
+       # self.lastKey = ""
+        #return key
+        return self.lastKey
     def getHeight(self):
         """Return the height of the window"""
         return self.height
@@ -393,6 +393,7 @@ class GraphWin(tk.Canvas):
 
     def keyReleaseHandler(self, e):
         self.keys.remove(e.keysym)
+        self.lastKey = ""
 
     def checkKeys(self):
         self.update() # BB 3/2018 Added to Fix neccessary update in loop
