@@ -1,40 +1,31 @@
-﻿# graphics.py
+# graphics.py
 """Simple object oriented graphics library
-
 The library is designed to make it very easy for novice programmers to
 experiment with computer graphics in an object oriented fashion. It is
 written by John Zelle for use with the book "Python Programming: An
 Introduction to Computer Science" (Franklin, Beedle & Associates).
-
 LICENSE: This is open-source software released under the terms of the
 GPL (http://www.gnu.org/licenses/gpl.html).
-
 PLATFORMS: The package is a wrapper around Tkinter and should run on
 any platform where Tkinter is available.
-
 INSTALLATION: Put this file somewhere where Python can see it.
-
 OVERVIEW: There are two kinds of objects in the library. The GraphWin
 class implements a window where drawing can be done and various
 GraphicsObjects are provided that can be drawn into a GraphWin. As a
 simple example, here is a complete program to draw a circle of radius
 10 centered in a 100x100 window:
-
 --------------------------------------------------------------------
 from graphics import *
-
 def main():
     win = GraphWin("My Circle", 100, 100)
     c = Circle(Point(50,50), 10)
     c.draw(win)
     win.getMouse() # Pause to view result
     win.close()    # Close window when done
-
 main()
 --------------------------------------------------------------------
 GraphWin objects support coordinate transformation through the
 setCoords method and mouse and keyboard interaction methods.
-
 The library provides the following graphical objects:
     Point
     Line
@@ -45,16 +36,13 @@ The library provides the following graphical objects:
     Text
     Entry (for text-based input)
     Image
-
 Various attributes of graphical objects can be set such as
 outline-color, fill-color and line-width. Graphical objects also
 support moving and hiding for animation effects.
-
 The library also provides a very simple class for pixel-based image
 manipulation, Pixmap. A pixmap can be loaded from a file and displayed
 using an Image object. Both getPixel and setPixel methods are provided
 for manipulating the image.
-
 DOCUMENTATION: For complete documentation, see Chapter 4 of "Python
 Programming: An Introduction to Computer Science" by John Zelle,
 published by Franklin, Beedle & Associates.  Also see
@@ -224,10 +212,13 @@ class GraphWin(tk.Canvas):
         self.mouseX = None
         self.mouseY = None
         self.keys = set()                                       #DJC: Added 03.05.18.11.33
+        self.currentMouseX = 0                                  #DJC: Added 04.04.18.12.03
+        self.currentMouseY = 0                                  #DJC: Added 04.04.18.12.03
         self.bind("<Button-1>", self._onClick)
-        self.bind_all("<Key>", self._onKey)
+#        self.bind_all("<Key>", self._onKey)
         self.bind_all('<KeyPress>', self.keyPressHandler)       #DJC: Added 03.05.18.11.33
         self.bind_all('<KeyRelease>', self.keyReleaseHandler)   #DJC: Added 03.05.18.11.33
+        self.bind_all('<Motion>', self._motion)                 #DJC: Added 04.04.18.12.03
         self.height = int(height)
         self.width = int(width)
         self.autoflush = autoflush
@@ -351,10 +342,10 @@ class GraphWin(tk.Canvas):
         if self.isClosed():
             raise GraphicsError("checkKey in closed window")
         self.update()
-        key = self.lastKey
-        self.lastKey = ""
-        return key
-
+       # key = self.lastKey
+       # self.lastKey = ""
+        #return key
+        return self.lastKey
     def getHeight(self):
         """Return the height of the window"""
         return self.height
@@ -398,16 +389,27 @@ class GraphWin(tk.Canvas):
             item.draw(self)
         self.update()
 
-# DJC: 03.05.18.11.37
+    # DJC: 03.05.18.11.37
     def keyPressHandler(self, e):
         self.keys.add(e.keysym)
+        self._onKey(e) # BB 3/2018 fixes getKey and checkKey bug
 
     def keyReleaseHandler(self, e):
         self.keys.remove(e.keysym)
+        self.lastKey = ""
 
     def checkKeys(self):
+        self.update() # BB 3/2018 Added to Fix neccessary update in loop
         return self.keys
-# DJC: end
+    # DJC: end
+
+    # DJC: Added 04.04.18.12.03
+    def _motion(self, event):
+        self.currentMouseX, self.currentMouseY = event.x, event.y
+
+    def getCurrentMouseLocation(self):
+        return Point(self.currentMouseX, self.currentMouseY)
+    # DJC: end
 
 
 class Transform:
@@ -440,6 +442,7 @@ class Transform:
 # Default values for various item configuration options. Only a subset of
 #   keys may be present in the configuration dictionary for a given item
 DEFAULT_CONFIG = {"fill": "",
+                  "activefill":"",  #BB added ActiveFill 3/9/2018
                   "outline": "black",
                   "width": "1",
                   "arrow": "none",
@@ -481,6 +484,9 @@ class GraphicsObject:
     def setWidth(self, width):
         """Set line weight to width"""
         self._reconfig("width", width)
+
+    def setActiveFill(self, color):         #Added By BB 3/8
+        self._reconfig("activefill", color)
 
     def draw(self, graphwin):
 
@@ -586,7 +592,7 @@ class _BBox(GraphicsObject):
     # Internal base class for objects represented by bounding box
     # (opposite corners) Line segment is a degenerate case.
 
-    def __init__(self, p1, p2, options=["outline", "width", "fill"]):
+    def __init__(self, p1, p2, options=["outline", "width", "fill","activefill"]): #BB added activefill
         GraphicsObject.__init__(self, options)
         self.p1 = p1.clone()
         self.p2 = p2.clone()
@@ -626,6 +632,47 @@ class Rectangle(_BBox):
         other.config = self.config.copy()
         return other
 
+class RoundedRectangle(Rectangle): # BB added 3/9/2018
+    """Creates a rectangle with rounded corners of a given radius"""
+    def __init__(self, p1, p2, radius = 25):
+        super(RoundedRectangle, self).__init__(p1, p2)
+        x1 = p1.x
+        x2 = p2.x
+        y1 = p1.y
+        y2 = p2.y
+        self.radius = radius
+        #self.points is a list of points that contain rounded corners
+        self.points = [x1 + radius, y1,
+                  x1 + radius, y1, #segment between x1+radius, y1 and x2-radius , y1 is not rounded
+                  x2 - radius, y1,
+                  x2 - radius, y1,
+                  x2, y1,          #defines the corner that we create a curve out too between adjacent points
+                  x2, y1 + radius,
+                  x2, y1 + radius,
+                  x2, y2 - radius,
+                  x2, y2 - radius,
+                  x2, y2,
+                  x2 - radius, y2,
+                  x2 - radius, y2,
+                  x1 + radius, y2,
+                  x1 + radius, y2,
+                  x1, y2,
+                  x1, y2 - radius,
+                  x1, y2 - radius,
+                  x1, y1 + radius,
+                  x1, y1 + radius,
+                  x1, y1]
+
+    def __repr__(self):
+        return "Rounded Rectangle({}, {}, {})".format(str(self.p1), str(self.p2), str(self.radius))
+
+    def clone(self):
+        other = RoundedRectangle(self.p1, self.p2, self.radius)
+        other.config = self.config.copy()
+        return other
+
+    def _draw(self, canvas, options):
+        return canvas.create_polygon(self.points, options, smooth=True)
 
 class Oval(_BBox):
     def __init__(self, p1, p2):
@@ -647,16 +694,27 @@ class Oval(_BBox):
         return canvas.create_oval(x1, y1, x2, y2, options)
 
 class Arc(_BBox):
-    def __init__(self, p1, p2, startAngle, rotation, style="PIESLICE"):
+    """Creates an arc, sector, or chord given opposite corners of a bounding box
+    a starting angle, and a rotation in degrees"""
+    def __init__(self, p1, p2, startAngle, rotation, style="SECTOR"):
         _BBox.__init__(self, p1, p2)
         self.startAngle = startAngle
         self.rotation = rotation
-        if(style == "PIESLICE"):
+        self.styleAsString = style.upper()
+        if(self.styleAsString == "SECTOR"):
             self.style = tk.PIESLICE
-        elif(style == "CHORD"):
+        elif(self.styleAsString == "CHORD"):
             self.style = tk.CHORD
         else:
             self.style = tk.ARC
+
+    def __repr__(self):
+        return "Arc({},{},{},{})".format(str(self.p1), str(self.p2), str(self.startAngle), str(self.rotation))
+
+    def clone(self):
+        other = Arc(self.p1, self.p2, self.startAngle, self.rotation, self.styleAsString)
+        other.config = self.config.copy()
+        return other
 
     def _draw(self, canvas, options):
         p1 = self.p1
@@ -717,7 +775,7 @@ class Polygon(GraphicsObject):
         if len(points) == 1 and type(points[0]) == type([]):
             points = points[0]
         self.points = list(map(Point.clone, points))
-        GraphicsObject.__init__(self, ["outline", "width", "fill"])
+        GraphicsObject.__init__(self, ["outline", "width", "fill", "activefill"]) #BB added activefill 3/9/2018
 
     def __repr__(self):
         return "Polygon" + str(tuple(p for p in self.points))
@@ -944,7 +1002,6 @@ class Image(GraphicsObject):
     def getPixel(self, x, y):
         """Returns a list [r,g,b] with the RGB color values for pixel (x,y)
         r,g,b are in range(256)
-
         """
 
         value = self.img.get(x, y)
@@ -957,14 +1014,12 @@ class Image(GraphicsObject):
 
     def setPixel(self, x, y, color):
         """Sets pixel (x,y) to the given color
-
         """
         self.img.put("{" + color + "}", (x, y))
 
     def save(self, filename):
         """Saves the pixmap image to filename.
         The format for the save image is determined from the filname extension.
-
         """
 
         path, name = os.path.split(filename)
