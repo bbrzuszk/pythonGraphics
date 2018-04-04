@@ -7,6 +7,9 @@ This library give students the abilty to create basic shapes, widgets, and anima
 ## How To Use
 Place the graphics.py file in the same directory as your current project that is using the library.  To use the classes of the library, best practice is to import it into your current project by typing from graphics import * as the first line of code in your python file. This will give you access to the graphics module in your current python file and any file the imports from that file.
 
+## Update: GraphWin method getCurrentMouseLocation() added 4/4/2018
+Method getCurrentMouseLocation() will return a point for the location of the mouse cursor in the window at any given time.
+
 
 ## Update: Class RoundedRectangle 3/10/2018
 Class RoundedRectangle give you the ability to create a rectangle object with rounded corners.  Class RoundedRectangle inherits from Rectangle. RoundedRectangle requires 2 parameters, each a point of opposite corners just as in a Rectangle.  The optional 3rd parameter would be the radius of the curve.  This value is defaulted to 25 but may be increased for larger rounded corners or decreased for smaller corners.
