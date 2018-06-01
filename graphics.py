@@ -399,7 +399,9 @@ class GraphWin(tk.Canvas):
         self.lastKey = ""
 
     def checkKeys(self):
-        self.update() # BB 3/2018 Added to Fix neccessary update in loop
+        # DJC 06.01.18.07.17
+        # Eliminated because you want control of window.update() in main loop
+        # self.update() # BB 3/2018 Added to Fix neccessary update in loop
         return self.keys
     # DJC: end
 
