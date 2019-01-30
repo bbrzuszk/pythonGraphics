@@ -148,7 +148,7 @@ __version__ = "5.0"
 #     Added ability to set text atttributes.
 #     Added Entry boxes.
 
-import time, os, sys
+import time, os, sys, math
 
 try:  # import as appropriate for 2.x vs. 3.x
     import tkinter as tk
