@@ -155,6 +155,16 @@ try:  # import as appropriate for 2.x vs. 3.x
 except:
     import Tkinter as tk
 
+# DJC: Added 01.30.19.14.03
+# Attempts to load Pillow library and saves boolean for testing in Image class."""
+try:
+    import importlib
+    importlib.__import__("PIL")
+    from PIL import Image as PILIMage, ImageTk as PILImageTK
+    importedPillow = True
+except ImportError:
+    importedPillow = False
+# DJC: end
 
 ##########################################################################
 # Module Exceptions
@@ -957,9 +967,16 @@ class Image(GraphicsObject):
         GraphicsObject.__init__(self, [])
         self.anchor = p.clone()
         self.imageId = Image.idCount
+        self.pilImage = None                                    # DJC: 01.30.19.14.44 Original PIL Image
         Image.idCount = Image.idCount + 1
         if len(pixmap) == 1:  # file name provided
-            self.img = tk.PhotoImage(file=pixmap[0], master=_root)
+            # DJC: 01.30.19.14.45 Added PIL Support
+            if importedPillow:
+                self.pilImage = PILIMage.open(pixmap[0])        # Save original to reference & prevent image degradation
+                self.img = PILImageTK.PhotoImage(self.pilImage, master=_root)
+            else:
+                self.img = tk.PhotoImage(file=pixmap[0], master=_root)
+            # DJC: End
         else:  # width and height provided
             width, height = pixmap
             self.img = tk.PhotoImage(master=_root, width=width, height=height)
@@ -1027,6 +1044,21 @@ class Image(GraphicsObject):
         path, name = os.path.split(filename)
         ext = name.split(".")[-1]
         self.img.write(filename, format=ext)
+        
+    # DJC: Added 01.30.19.19.49
+    def transform(self, scale=1, angle=0):
+        """Resizes and/or Rotates the 'original' image according to the scale/angle passed."""
+        if importedPillow:
+            tempImg = self.pilImage.copy()
+            newWidth = int(tempImg.width * scale)
+            newHeight = int(tempImg.height * scale)
+            tempImg = tempImg.resize((newWidth, newHeight), resample=PILIMage.BILINEAR)
+            tempImg = tempImg.rotate(angle, resample=PILIMage.BILINEAR, expand=True)
+            self.img = PILImageTK.PhotoImage(tempImg, master=_root)
+        else:
+            raise Exception("You need to install the Pillow module to resize/rotate images."
+                            "\n           For instructions, see: https://pillow.readthedocs.io/en/3.3.x/installation.html")
+    # DJC: End
 
 
 def color_rgb(r, g, b):
