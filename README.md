@@ -11,7 +11,7 @@ Place the graphics.py file in the same directory as your current project that is
 Class Image now gives you the ability to scale and rotate through a [transform method](https://github.com/bbrzuszk/pythonGraphics/wiki/5.-Image-Objects-and-Methods) images if and only if the Pillow modulue is installed on your machine.  If not you can still use the Image class as you did before
 
 ## Update: Class RotatablePolygon 2/4/2019
-Class RotatablePolygon give you the ability to a polygon object that is able to rotate a specific number of degrees about the polygons centroid.
+Class [RotatablePolygon](https://github.com/bbrzuszk/pythonGraphics/wiki/3.8.1-Rotatable-Polygon-Object) give you the ability to a polygon object that is able to rotate a specific number of degrees about the polygons centroid.
 
 ## Update: GraphWin method getCurrentMouseLocation() added 4/4/2018
 Method [getCurrentMouseLocation()](https://github.com/bbrzuszk/pythonGraphics/wiki/2-GraphWin-Object#keyboard-and-mouse-controls) will return a point for the location of the mouse cursor in the window at any given time.
