@@ -148,7 +148,7 @@ __version__ = "5.0"
 #     Added ability to set text atttributes.
 #     Added Entry boxes.
 
-import time, os, sys
+import time, os, sys, math
 
 try:  # import as appropriate for 2.x vs. 3.x
     import tkinter as tk
@@ -450,7 +450,8 @@ DEFAULT_CONFIG = {"fill": "",
                   "arrow": "none",
                   "text": "",
                   "justify": "center",
-                  "font": ("helvetica", 12, "normal")}
+                  "font": ("helvetica", 12, "normal"),
+                  "smooth": "0"}  # Niss added 1.05.2017
 
 
 class GraphicsObject:
@@ -489,6 +490,18 @@ class GraphicsObject:
 
     def setActiveFill(self, color):         #Added By BB 3/8
         self._reconfig("activefill", color)
+
+    def setSmooth(self, bool):         #Niss: added 1.05.2017
+        """Set smooth boolean to bool"""
+        self._reconfig("smooth", bool)
+
+    def redraw(self):         #Niss: added 1.05.2017
+        """Redraws the object (i.e. hide it and then makes visible again) aReturns silently if the
+        object is not currently drawn."""
+        if not self.canvas: return
+        if not self.canvas.isClosed():
+            self.canvas.delete(self.id)
+        self.id = self._draw(self.canvas, self.config)
 
     def draw(self, graphwin):
 
@@ -777,8 +790,8 @@ class Polygon(GraphicsObject):
         if len(points) == 1 and type(points[0]) == type([]):
             points = points[0]
         self.points = list(map(Point.clone, points))
-        GraphicsObject.__init__(self, ["outline", "width", "fill", "activefill"]) #BB added activefill 3/9/2018
-
+        GraphicsObject.__init__(self, ["outline", "width", "fill", "activefill", "smooth"]) #BB added activefill 3/9/2018
+                                                                                            # Niss added "smooth" 04_05_2017
     def __repr__(self):
         return "Polygon" + str(tuple(p for p in self.points))
 
@@ -803,7 +816,72 @@ class Polygon(GraphicsObject):
         args.append(options)
         return GraphWin.create_polygon(*args)
 
+class RotatablePolygon(Polygon):    #Niss: added 1.05.2017
+    """Creates an Polygon that can be rotated."""
+    def __init__(self, *points):
+        # if points passed as a list, extract it
+        if len(points) == 1 and type(points[0] == type([])):
+            points = points[0]
+        points = list(map(Point.clone, points))
+        Polygon.__init__(self, points)
+        self.theta = 0
+        self.orig_points = points  # must recalc each rot w/ original pts or rounding
+        # creates degredation of poly shape
+        self.center = None
+        self.find_centroid()
 
+    def rotate(self, degrees=0, about=None):
+        """rotates a Polygon object // DEGREES = how far CCW the object is rotated //
+        ABOUT = the center of rotation"""
+        if about == None:
+            about = self.center
+        self.theta = (self.theta + degrees) % 360
+        if degrees != 0:
+            radians = (self.theta * math.pi) / 180
+            for i in range(len(self.orig_points)):
+                orig_x_diff = self.orig_points[i].getX() - about.getX()
+                orig_y_diff = self.orig_points[i].getY() - about.getY()
+                newx = orig_x_diff * math.cos(radians) + orig_y_diff * math.sin(radians)
+                newy = orig_y_diff * math.cos(radians) - orig_x_diff * math.sin(radians)
+                dx = round(newx - self.points[i].getX())
+                dy = round(newy - self.points[i].getY())
+                self.points[i].move(dx + about.getX(), dy + about.getY())
+            self.redraw()
+            self.find_centroid()
+
+    def find_centroid(self):
+        """calculates the centroid of a polygon"""
+        x_sum = 0
+        y_sum = 0
+        for p in self.points:
+            x_sum += p.getX()
+            y_sum += p.getY()
+        self.center = Point(round(x_sum / len(self.points)), round(y_sum / len(self.points)))
+        return self.center
+
+    def _move(self, dx, dy):
+        """Overrides Polygon _move() to to add recalculation of centroid point for rotation purposes"""
+        Polygon._move(self, dx, dy)
+        for p in self.orig_points:
+            p.move(dx, dy)
+        self.find_centroid()
+
+class RotatableOval(RotatablePolygon):    #Niss: added 1.05.2017
+    """Creates an Oval that is actually a smoothed Polygon so it doesn't have an axis
+    aligned bounding box.  This allows it to be rotated."""
+    def __init__(self, center, x_radius, y_radius):
+        self.x_radius = x_radius
+        self.y_radius = y_radius
+        coords = []
+        for i in range(36):
+            x = round(center.getX() + self.x_radius * math.cos(i * math.pi / 18))
+            y = round(center.getY() + self.y_radius * math.sin(i * math.pi / 18))
+            coords.append(Point(x, y))
+        RotatablePolygon.__init__(self, coords)
+        GraphicsObject.__init__(self, ["outline", "width", "fill", "smooth"])
+        self.center = center
+        self.about = self.center        
+        
 class Text(GraphicsObject):
     def __init__(self, p, text):
         GraphicsObject.__init__(self, ["justify", "fill", "text", "font"])
