@@ -7,6 +7,9 @@ This library give students the abilty to create basic shapes, widgets, and anima
 ## How To Use
 Place the graphics.py file in the same directory as your current project that is using the library.  To use the classes of the library, best practice is to import it into your current project by typing from graphics import * as the first line of code in your python file. This will give you access to the graphics module in your current python file and any file the imports from that file.
 
+## Update: Transform Images 2/4/2019
+Class Image now gives you the ability to scale and rotate through a [transform method](https://github.com/bbrzuszk/pythonGraphics/wiki/5.-Image-Objects-and-Methods) images if and only if the Pillow modulue is installed on your machine.  If not you can still use the Image class as you did before
+
 ## Update: Class RotatablePolygon 2/4/2019
 Class RotatablePolygon give you the ability to a polygon object that is able to rotate a specific number of degrees about the polygons centroid.
 
