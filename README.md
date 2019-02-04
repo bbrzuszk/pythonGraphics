@@ -7,6 +7,9 @@ This library give students the abilty to create basic shapes, widgets, and anima
 ## How To Use
 Place the graphics.py file in the same directory as your current project that is using the library.  To use the classes of the library, best practice is to import it into your current project by typing from graphics import * as the first line of code in your python file. This will give you access to the graphics module in your current python file and any file the imports from that file.
 
+## Update: Class RotatablePolygon 2/4/2019
+Class RotatablePolygon give you the ability to a polygon object that is able to rotate a specific number of degrees about the polygons centroid.
+
 ## Update: GraphWin method getCurrentMouseLocation() added 4/4/2018
 Method [getCurrentMouseLocation()](https://github.com/bbrzuszk/pythonGraphics/wiki/2-GraphWin-Object#keyboard-and-mouse-controls) will return a point for the location of the mouse cursor in the window at any given time.
 
