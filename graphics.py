@@ -391,7 +391,8 @@ class GraphWin(tk.Canvas):
         self.items.append(item)
 
     def delItem(self, item):
-        self.items.remove(item)
+        if item in self.items:
+            self.items.remove(item)
 
     def redraw(self):
         for item in self.items[:]:
@@ -405,7 +406,8 @@ class GraphWin(tk.Canvas):
         self._onKey(e) # BB 3/2018 fixes getKey and checkKey bug
 
     def keyReleaseHandler(self, e):
-        self.keys.remove(e.keysym)
+        if e.keysym in self.keys:
+            self.keys.remove(e.keysym)
         self.lastKey = ""
 
     def checkKeys(self):
