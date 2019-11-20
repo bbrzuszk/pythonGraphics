@@ -221,7 +221,8 @@ class GraphWin(tk.Canvas):
         self.items = []
         self.mouseX = None
         self.mouseY = None
-        self.keys = set()                                       #DJC: Added 03.05.18.11.33
+        self.keys = []                                          #DJC: Added 03.05.18.11.33
+        self.releasedKeys = []                                  #NLI: Added 20.11.19
         self.currentMouseX = 0                                  #DJC: Added 04.04.18.12.03
         self.currentMouseY = 0                                  #DJC: Added 04.04.18.12.03
         self.bind("<Button-1>", self._onClick)
@@ -343,19 +344,16 @@ class GraphWin(tk.Canvas):
             if self.isClosed(): raise GraphicsError("getKey in closed window")
             time.sleep(.1)  # give up thread
 
-        key = self.lastKey
-        self.lastKey = ""
-        return key
+        lastKey = self.lastKey
+        self.checkKeys()
+        return lastKey
 
     def checkKey(self):
         """Return last key pressed or None if no key pressed since last call"""
-        if self.isClosed():
-            raise GraphicsError("checkKey in closed window")
-        self.update()
-       # key = self.lastKey
-       # self.lastKey = ""
-        #return key
-        return self.lastKey
+        lastKey = self.lastKey
+        self.checkKeys()
+        return lastKey
+    
     def getHeight(self):
         """Return the height of the window"""
         return self.height
@@ -402,20 +400,30 @@ class GraphWin(tk.Canvas):
 
     # DJC: 03.05.18.11.37
     def keyPressHandler(self, e):
-        self.keys.add(e.keysym)
+        key = e.keysym
+        if key not in self.keys:
+            self.keys.append(key)
+        if key in self.releasedKeys:
+            self.releasedKeys.remove(key)
         self._onKey(e) # BB 3/2018 fixes getKey and checkKey bug
 
     def keyReleaseHandler(self, e):
-        if e.keysym in self.keys:
-            self.keys.remove(e.keysym)
-        self.lastKey = ""
+        key = e.keysym
+        if key not in self.releasedKeys:
+            self.releasedKeys.append(key)
 
     def checkKeys(self):
         # DJC 06.01.18.07.17
         # Eliminated because you want control of window.update() in main loop
         # self.update() # BB 3/2018 Added to Fix neccessary update in loop
-        return self.keys
-    # DJC: end
+        if self.lastKey in self.releasedKeys:
+            self.lastKey = ""
+        keys = self.keys[:]
+        for key in keys:
+            if key in self.releasedKeys:
+                self.keys.remove(key)
+        self.releasedKeys[:] = []
+        return keys
 
     # DJC: Added 04.04.18.12.03
     def _motion(self, event):
