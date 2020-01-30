@@ -221,7 +221,8 @@ class GraphWin(tk.Canvas):
         self.items = []
         self.mouseX = None
         self.mouseY = None
-        self.keys = set()                                       #DJC: Added 03.05.18.11.33
+        self.keys = []                                          #DJC: Added 03.05.18.11.33
+        self.releasedKeys = []                                  #NLI: Added 20.11.19
         self.currentMouseX = 0                                  #DJC: Added 04.04.18.12.03
         self.currentMouseY = 0                                  #DJC: Added 04.04.18.12.03
         self.bind("<Button-1>", self._onClick)
@@ -343,19 +344,16 @@ class GraphWin(tk.Canvas):
             if self.isClosed(): raise GraphicsError("getKey in closed window")
             time.sleep(.1)  # give up thread
 
-        key = self.lastKey
-        self.lastKey = ""
-        return key
+        lastKey = self.lastKey
+        self.checkKeys()
+        return lastKey
 
     def checkKey(self):
         """Return last key pressed or None if no key pressed since last call"""
-        if self.isClosed():
-            raise GraphicsError("checkKey in closed window")
-        self.update()
-       # key = self.lastKey
-       # self.lastKey = ""
-        #return key
-        return self.lastKey
+        lastKey = self.lastKey
+        self.checkKeys()
+        return lastKey
+    
     def getHeight(self):
         """Return the height of the window"""
         return self.height
@@ -391,7 +389,8 @@ class GraphWin(tk.Canvas):
         self.items.append(item)
 
     def delItem(self, item):
-        self.items.remove(item)
+        if item in self.items:
+            self.items.remove(item)
 
     def redraw(self):
         for item in self.items[:]:
@@ -401,19 +400,30 @@ class GraphWin(tk.Canvas):
 
     # DJC: 03.05.18.11.37
     def keyPressHandler(self, e):
-        self.keys.add(e.keysym)
+        key = e.keysym
+        if key not in self.keys:
+            self.keys.append(key)
+        if key in self.releasedKeys:
+            self.releasedKeys.remove(key)
         self._onKey(e) # BB 3/2018 fixes getKey and checkKey bug
 
     def keyReleaseHandler(self, e):
-        self.keys.remove(e.keysym)
-        self.lastKey = ""
+        key = e.keysym
+        if key not in self.releasedKeys:
+            self.releasedKeys.append(key)
 
     def checkKeys(self):
         # DJC 06.01.18.07.17
         # Eliminated because you want control of window.update() in main loop
         # self.update() # BB 3/2018 Added to Fix neccessary update in loop
-        return self.keys
-    # DJC: end
+        if self.lastKey in self.releasedKeys:
+            self.lastKey = ""
+        keys = self.keys[:]
+        for key in keys:
+            if key in self.releasedKeys:
+                self.keys.remove(key)
+        self.releasedKeys[:] = []
+        return keys
 
     # DJC: Added 04.04.18.12.03
     def _motion(self, event):
@@ -875,6 +885,34 @@ class RotatablePolygon(Polygon):    #Niss: added 1.05.2017
         for p in self.orig_points:
             p.move(dx, dy)
         self.find_centroid()
+    
+    def scale(self, scaling_factor=None, about=None):
+        """Scales the polygon. Scaling factor can be specified either with an int/float foruniform scaling
+        or with eg. a tuple if x- and y-axes are to be scaled by different factors."""
+        if scaling_factor is None:
+            return
+        if isinstance(scaling_factor, (int,float)):
+            scaling_factor_x = scaling_factor
+            scaling_factor_y = scaling_factor
+        elif len(scaling_factor) > 1:
+            scaling_factor_x = scaling_factor[0]
+            scaling_factor_y = scaling_factor[1]
+        if scaling_factor_x == 1 and scaling_factor_y == 1:
+            # No scaling needed
+            return
+        if about == None:
+            about = self.center
+        for i in range(len(self.points)):
+            unscaled_x_diff = self.points[i].getX() - about.getX()
+            unscaled_y_diff = self.points[i].getY() - about.getY()
+            scaled_x_diff = unscaled_x_diff*scaling_factor_x
+            scaled_y_diff = unscaled_y_diff*scaling_factor_y
+            difference_x = scaled_x_diff-unscaled_x_diff
+            difference_y = scaled_y_diff-unscaled_y_diff
+            self.points[i].move(difference_x, difference_y)
+        self.redraw()
+        self.center = self.find_centroid()
+
 
 class RotatableOval(RotatablePolygon):    #Niss: added 1.05.2017
     """Creates an Oval that is actually a smoothed Polygon so it doesn't have an axis
