@@ -343,7 +343,7 @@ class GraphWin(tk.Canvas):
         self.mouseYright = None
         return Point(x, y)
 
-    def checkMouseRight(self):  # SN: Added 04.05.20.22.17
+    def checkMouse(self):
         """Return last mouse click or None if mouse has
         not been clicked since last call"""
         if self.isClosed():
@@ -357,7 +357,7 @@ class GraphWin(tk.Canvas):
         else:
             return None
 
-    def checkMouseRight(self):
+    def checkMouseRight(self):  # SN: Added 04.05.20.22.17
         """Return last mouse click or None if mouse has
         not been clicked since last call"""
         if self.isClosed():
