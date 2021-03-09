@@ -223,6 +223,8 @@ class GraphWin(tk.Canvas):
         master.resizable(0, 0)
         self.foreground = "black"
         self.items = []
+        self.mousePressed = False  # DJC: Added 03.09.21.14.49
+        self.mouseRtPressed = False  # DJC: Added 03.09.21.14.49
         self.mouseX = None
         self.mouseY = None
         self.mouseXright = None  # SN: Added 04.05.20.22.17
@@ -231,7 +233,9 @@ class GraphWin(tk.Canvas):
         self.currentMouseX = 0  # DJC: Added 04.04.18.12.03
         self.currentMouseY = 0  # DJC: Added 04.04.18.12.03
         self.bind("<Button-1>", self._onClick)
+        self.bind("<ButtonRelease-1>", self._releaseClick)  # DJC: Added 03.09.21.14.49
         self.bind("<Button-3>", self._onRtClick)  # SN: Added 04.05.20.22.17
+        self.bind("<ButtonRelease-3>", self._releaseRtClick)  # DJC: Added 03.09.21.14.49
         #        self.bind_all("<Key>", self._onKey)
         self.bind_all('<KeyPress>', self.keyPressHandler)  # DJC: Added 03.05.18.11.33
         self.bind_all('<KeyRelease>', self.keyReleaseHandler)  # DJC: Added 03.05.18.11.33
@@ -419,16 +423,25 @@ class GraphWin(tk.Canvas):
         self._mouseCallback = func
 
     def _onClick(self, e):
+        self.mousePressed = True  # DJC: Added 03.09.21.14.49
         self.mouseX = e.x
         self.mouseY = e.y
         if self._mouseCallback:
             self._mouseCallback(Point(e.x, e.y))
 
     def _onRtClick(self, e):  # SN: Added 04.05.20.22.17
+        self.mouseRtPressed = True  # DJC: Added 03.09.21.14.49
         self.mouseXright = e.x
         self.mouseYright = e.y
         if self._mouseCallback:
             self._mouseCallback(Point(e.x, e.y))
+
+
+    def _releaseClick(self, e):  # DJC: Added 03.09.21.14.49
+        self.mousePressed = False
+
+   
+
 
     def addItem(self, item):
         self.items.append(item)
