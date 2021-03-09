@@ -436,12 +436,11 @@ class GraphWin(tk.Canvas):
         if self._mouseCallback:
             self._mouseCallback(Point(e.x, e.y))
 
-
     def _releaseClick(self, e):  # DJC: Added 03.09.21.14.49
         self.mousePressed = False
 
-   
-
+    def _releaseRtClick(self, e):  # DJC: Added 03.09.21.14.49
+        self.mouseRtPressed = False
 
     def addItem(self, item):
         self.items.append(item)
