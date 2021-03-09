@@ -148,7 +148,7 @@ __version__ = "5.0"
 #     Added ability to set text atttributes.
 #     Added Entry boxes.
 
-import time, os, sys
+import time, os, sys, math
 
 try:  # import as appropriate for 2.x vs. 3.x
     import tkinter as tk
@@ -159,11 +159,15 @@ except:
 # Attempts to load Pillow library and saves boolean for testing in Image class."""
 try:
     import importlib
+
     importlib.__import__("PIL")
     from PIL import Image as PILIMage, ImageTk as PILImageTK
+
     importedPillow = True
 except ImportError:
     importedPillow = False
+
+
 # DJC: end
 
 ##########################################################################
@@ -219,16 +223,23 @@ class GraphWin(tk.Canvas):
         master.resizable(0, 0)
         self.foreground = "black"
         self.items = []
+        self.mousePressed = False  # DJC: Added 03.09.21.14.49
+        self.mouseRtPressed = False  # DJC: Added 03.09.21.14.49
         self.mouseX = None
         self.mouseY = None
-        self.keys = set()                                       #DJC: Added 03.05.18.11.33
-        self.currentMouseX = 0                                  #DJC: Added 04.04.18.12.03
-        self.currentMouseY = 0                                  #DJC: Added 04.04.18.12.03
+        self.mouseXright = None  # SN: Added 04.05.20.22.17
+        self.mouseYright = None  # SN: Added 04.05.20.22.17
+        self.keys = set()  # DJC: Added 03.05.18.11.33
+        self.currentMouseX = 0  # DJC: Added 04.04.18.12.03
+        self.currentMouseY = 0  # DJC: Added 04.04.18.12.03
         self.bind("<Button-1>", self._onClick)
-#        self.bind_all("<Key>", self._onKey)
-        self.bind_all('<KeyPress>', self.keyPressHandler)       #DJC: Added 03.05.18.11.33
-        self.bind_all('<KeyRelease>', self.keyReleaseHandler)   #DJC: Added 03.05.18.11.33
-        self.bind_all('<Motion>', self._motion)                 #DJC: Added 04.04.18.12.03
+        self.bind("<ButtonRelease-1>", self._releaseClick)  # DJC: Added 03.09.21.14.49
+        self.bind("<Button-3>", self._onRtClick)  # SN: Added 04.05.20.22.17
+        self.bind("<ButtonRelease-3>", self._releaseRtClick)  # DJC: Added 03.09.21.14.49
+        #        self.bind_all("<Key>", self._onKey)
+        self.bind_all('<KeyPress>', self.keyPressHandler)  # DJC: Added 03.05.18.11.33
+        self.bind_all('<KeyRelease>', self.keyReleaseHandler)  # DJC: Added 03.05.18.11.33
+        self.bind_all('<Motion>', self._motion)  # DJC: Added 04.04.18.12.03
         self.height = int(height)
         self.width = int(width)
         self.autoflush = autoflush
@@ -321,6 +332,21 @@ class GraphWin(tk.Canvas):
         self.mouseY = None
         return Point(x, y)
 
+    def getMouseRight(self):  # SN: Added 04.05.20.22.17
+        """Wait for a RIGHT mouse click and return Point object representing
+        the click"""
+        self.update()  # flush any prior clicks
+        self.mouseXright = None
+        self.mouseYright = None
+        while self.mouseXright == None or self.mouseYright == None:
+            self.update()
+            if self.isClosed(): raise GraphicsError("getMouse in closed window")
+            time.sleep(.1)  # give up thread
+        x, y = self.toWorld(self.mouseXright, self.mouseYright)
+        self.mouseXright = None
+        self.mouseYright = None
+        return Point(x, y)
+
     def checkMouse(self):
         """Return last mouse click or None if mouse has
         not been clicked since last call"""
@@ -331,6 +357,20 @@ class GraphWin(tk.Canvas):
             x, y = self.toWorld(self.mouseX, self.mouseY)
             self.mouseX = None
             self.mouseY = None
+            return Point(x, y)
+        else:
+            return None
+
+    def checkMouseRight(self):  # SN: Added 04.05.20.22.17
+        """Return last mouse click or None if mouse has
+        not been clicked since last call"""
+        if self.isClosed():
+            raise GraphicsError("checkMouse in closed window")
+        self.update()
+        if self.mouseXright != None and self.mouseYright != None:
+            x, y = self.toWorld(self.mouseXright, self.mouseYright)
+            self.mouseXright = None
+            self.mouseYright = None
             return Point(x, y)
         else:
             return None
@@ -352,10 +392,11 @@ class GraphWin(tk.Canvas):
         if self.isClosed():
             raise GraphicsError("checkKey in closed window")
         self.update()
-       # key = self.lastKey
-       # self.lastKey = ""
-        #return key
+        # key = self.lastKey
+        # self.lastKey = ""
+        # return key
         return self.lastKey
+
     def getHeight(self):
         """Return the height of the window"""
         return self.height
@@ -382,10 +423,24 @@ class GraphWin(tk.Canvas):
         self._mouseCallback = func
 
     def _onClick(self, e):
+        self.mousePressed = True  # DJC: Added 03.09.21.14.49
         self.mouseX = e.x
         self.mouseY = e.y
         if self._mouseCallback:
             self._mouseCallback(Point(e.x, e.y))
+
+    def _onRtClick(self, e):  # SN: Added 04.05.20.22.17
+        self.mouseRtPressed = True  # DJC: Added 03.09.21.14.49
+        self.mouseXright = e.x
+        self.mouseYright = e.y
+        if self._mouseCallback:
+            self._mouseCallback(Point(e.x, e.y))
+
+    def _releaseClick(self, e):  # DJC: Added 03.09.21.14.49
+        self.mousePressed = False
+
+    def _releaseRtClick(self, e):  # DJC: Added 03.09.21.14.49
+        self.mouseRtPressed = False
 
     def addItem(self, item):
         self.items.append(item)
@@ -402,7 +457,7 @@ class GraphWin(tk.Canvas):
     # DJC: 03.05.18.11.37
     def keyPressHandler(self, e):
         self.keys.add(e.keysym)
-        self._onKey(e) # BB 3/2018 fixes getKey and checkKey bug
+        self._onKey(e)  # BB 3/2018 fixes getKey and checkKey bug
 
     def keyReleaseHandler(self, e):
         self.keys.remove(e.keysym)
@@ -413,6 +468,7 @@ class GraphWin(tk.Canvas):
         # Eliminated because you want control of window.update() in main loop
         # self.update() # BB 3/2018 Added to Fix neccessary update in loop
         return self.keys
+
     # DJC: end
 
     # DJC: Added 04.04.18.12.03
@@ -454,13 +510,14 @@ class Transform:
 # Default values for various item configuration options. Only a subset of
 #   keys may be present in the configuration dictionary for a given item
 DEFAULT_CONFIG = {"fill": "",
-                  "activefill":"",  #BB added ActiveFill 3/9/2018
+                  "activefill": "",  # BB added ActiveFill 3/9/2018
                   "outline": "black",
                   "width": "1",
                   "arrow": "none",
                   "text": "",
                   "justify": "center",
-                  "font": ("helvetica", 12, "normal")}
+                  "font": ("helvetica", 12, "normal"),
+                  "smooth": "0"}  # Niss added 1.05.2017
 
 
 class GraphicsObject:
@@ -497,8 +554,20 @@ class GraphicsObject:
         """Set line weight to width"""
         self._reconfig("width", width)
 
-    def setActiveFill(self, color):         #Added By BB 3/8
+    def setActiveFill(self, color):  # Added By BB 3/8
         self._reconfig("activefill", color)
+
+    def setSmooth(self, bool):  # Niss: added 1.05.2017
+        """Set smooth boolean to bool"""
+        self._reconfig("smooth", bool)
+
+    def redraw(self):  # Niss: added 1.05.2017
+        """Redraws the object (i.e. hide it and then makes visible again) aReturns silently if the
+        object is not currently drawn."""
+        if not self.canvas: return
+        if not self.canvas.isClosed():
+            self.canvas.delete(self.id)
+        self.id = self._draw(self.canvas, self.config)
 
     def draw(self, graphwin):
 
@@ -604,7 +673,7 @@ class _BBox(GraphicsObject):
     # Internal base class for objects represented by bounding box
     # (opposite corners) Line segment is a degenerate case.
 
-    def __init__(self, p1, p2, options=["outline", "width", "fill","activefill"]): #BB added activefill
+    def __init__(self, p1, p2, options=["outline", "width", "fill", "activefill"]):  # BB added activefill
         GraphicsObject.__init__(self, options)
         self.p1 = p1.clone()
         self.p2 = p2.clone()
@@ -644,36 +713,38 @@ class Rectangle(_BBox):
         other.config = self.config.copy()
         return other
 
-class RoundedRectangle(Rectangle): # BB added 3/9/2018
+
+class RoundedRectangle(Rectangle):  # BB added 3/9/2018
     """Creates a rectangle with rounded corners of a given radius"""
-    def __init__(self, p1, p2, radius = 25):
+
+    def __init__(self, p1, p2, radius=25):
         super(RoundedRectangle, self).__init__(p1, p2)
         x1 = p1.x
         x2 = p2.x
         y1 = p1.y
         y2 = p2.y
         self.radius = radius
-        #self.points is a list of points that contain rounded corners
+        # self.points is a list of points that contain rounded corners
         self.points = [x1 + radius, y1,
-                  x1 + radius, y1, #segment between x1+radius, y1 and x2-radius , y1 is not rounded
-                  x2 - radius, y1,
-                  x2 - radius, y1,
-                  x2, y1,          #defines the corner that we create a curve out too between adjacent points
-                  x2, y1 + radius,
-                  x2, y1 + radius,
-                  x2, y2 - radius,
-                  x2, y2 - radius,
-                  x2, y2,
-                  x2 - radius, y2,
-                  x2 - radius, y2,
-                  x1 + radius, y2,
-                  x1 + radius, y2,
-                  x1, y2,
-                  x1, y2 - radius,
-                  x1, y2 - radius,
-                  x1, y1 + radius,
-                  x1, y1 + radius,
-                  x1, y1]
+                       x1 + radius, y1,  # segment between x1+radius, y1 and x2-radius , y1 is not rounded
+                       x2 - radius, y1,
+                       x2 - radius, y1,
+                       x2, y1,  # defines the corner that we create a curve out too between adjacent points
+                       x2, y1 + radius,
+                       x2, y1 + radius,
+                       x2, y2 - radius,
+                       x2, y2 - radius,
+                       x2, y2,
+                       x2 - radius, y2,
+                       x2 - radius, y2,
+                       x1 + radius, y2,
+                       x1 + radius, y2,
+                       x1, y2,
+                       x1, y2 - radius,
+                       x1, y2 - radius,
+                       x1, y1 + radius,
+                       x1, y1 + radius,
+                       x1, y1]
 
     def __repr__(self):
         return "Rounded Rectangle({}, {}, {})".format(str(self.p1), str(self.p2), str(self.radius))
@@ -685,6 +756,7 @@ class RoundedRectangle(Rectangle): # BB added 3/9/2018
 
     def _draw(self, canvas, options):
         return canvas.create_polygon(self.points, options, smooth=True)
+
 
 class Oval(_BBox):
     def __init__(self, p1, p2):
@@ -705,17 +777,19 @@ class Oval(_BBox):
         x2, y2 = canvas.toScreen(p2.x, p2.y)
         return canvas.create_oval(x1, y1, x2, y2, options)
 
+
 class Arc(_BBox):
     """Creates an arc, sector, or chord given opposite corners of a bounding box
     a starting angle, and a rotation in degrees"""
+
     def __init__(self, p1, p2, startAngle, rotation, style="SECTOR"):
         _BBox.__init__(self, p1, p2)
         self.startAngle = startAngle
         self.rotation = rotation
         self.styleAsString = style.upper()
-        if(self.styleAsString == "SECTOR"):
+        if (self.styleAsString == "SECTOR"):
             self.style = tk.PIESLICE
-        elif(self.styleAsString == "CHORD"):
+        elif (self.styleAsString == "CHORD"):
             self.style = tk.CHORD
         else:
             self.style = tk.ARC
@@ -734,6 +808,7 @@ class Arc(_BBox):
         x1, y1 = canvas.toScreen(p1.x, p1.y)
         x2, y2 = canvas.toScreen(p2.x, p2.y)
         return canvas.create_arc(x1, y1, x2, y2, options, style=self.style, start=self.startAngle, extent=self.rotation)
+
 
 class Circle(Oval):
     def __init__(self, center, radius):
@@ -787,7 +862,9 @@ class Polygon(GraphicsObject):
         if len(points) == 1 and type(points[0]) == type([]):
             points = points[0]
         self.points = list(map(Point.clone, points))
-        GraphicsObject.__init__(self, ["outline", "width", "fill", "activefill"]) #BB added activefill 3/9/2018
+        GraphicsObject.__init__(self,
+                                ["outline", "width", "fill", "activefill", "smooth"])  # BB added activefill 3/9/2018
+        # Niss added "smooth" 04_05_2017
 
     def __repr__(self):
         return "Polygon" + str(tuple(p for p in self.points))
@@ -812,6 +889,76 @@ class Polygon(GraphicsObject):
             args.append(y)
         args.append(options)
         return GraphWin.create_polygon(*args)
+
+
+class RotatablePolygon(Polygon):  # Niss: added 1.05.2017
+    """Creates an Polygon that can be rotated."""
+
+    def __init__(self, *points):
+        # if points passed as a list, extract it
+        if len(points) == 1 and type(points[0] == type([])):
+            points = points[0]
+        points = list(map(Point.clone, points))
+        Polygon.__init__(self, points)
+        self.theta = 0
+        self.orig_points = points  # must recalc each rot w/ original pts or rounding
+        # creates degredation of poly shape
+        self.center = None
+        self.find_centroid()
+
+    def rotate(self, degrees=0, about=None):
+        """rotates a Polygon object // DEGREES = how far CCW the object is rotated //
+        ABOUT = the center of rotation"""
+        if about == None:
+            about = self.center
+        self.theta = (self.theta + degrees) % 360
+        if degrees != 0:
+            radians = (self.theta * math.pi) / 180
+            for i in range(len(self.orig_points)):
+                orig_x_diff = self.orig_points[i].getX() - about.getX()
+                orig_y_diff = self.orig_points[i].getY() - about.getY()
+                newx = orig_x_diff * math.cos(radians) + orig_y_diff * math.sin(radians)
+                newy = orig_y_diff * math.cos(radians) - orig_x_diff * math.sin(radians)
+                dx = newx - self.points[i].getX()
+                dy = newy - self.points[i].getY()
+                self.points[i].move(dx + about.getX(), dy + about.getY())
+            self.redraw()
+            self.find_centroid()
+
+    def find_centroid(self):
+        """calculates the centroid of a polygon"""
+        x_sum = 0
+        y_sum = 0
+        for p in self.points:
+            x_sum += p.getX()
+            y_sum += p.getY()
+        self.center = Point(round(x_sum / len(self.points)), round(y_sum / len(self.points)))
+        return self.center
+
+    def _move(self, dx, dy):
+        """Overrides Polygon _move() to to add recalculation of centroid point for rotation purposes"""
+        Polygon._move(self, dx, dy)
+        for p in self.orig_points:
+            p.move(dx, dy)
+        self.find_centroid()
+
+
+class RotatableOval(RotatablePolygon):  # Niss: added 1.05.2017
+    """Creates an Oval that is actually a smoothed Polygon so it doesn't have an axis
+    aligned bounding box.  This allows it to be rotated."""
+
+    def __init__(self, center, x_radius, y_radius):
+        self.x_radius = x_radius
+        self.y_radius = y_radius
+        coords = []
+        for i in range(36):
+            x = round(center.getX() + self.x_radius * math.cos(i * math.pi / 18))
+            y = round(center.getY() + self.y_radius * math.sin(i * math.pi / 18))
+            coords.append(Point(x, y))
+        RotatablePolygon.__init__(self, coords)
+        GraphicsObject.__init__(self, ["outline", "width", "fill", "smooth"])
+        self.center = center
+        self.about = self.center
 
 
 class Text(GraphicsObject):
@@ -967,12 +1114,12 @@ class Image(GraphicsObject):
         GraphicsObject.__init__(self, [])
         self.anchor = p.clone()
         self.imageId = Image.idCount
-        self.pilImage = None                                    # DJC: 01.30.19.14.44 Original PIL Image
+        self.pilImage = None  # DJC: 01.30.19.14.44 Original PIL Image
         Image.idCount = Image.idCount + 1
         if len(pixmap) == 1:  # file name provided
             # DJC: 01.30.19.14.45 Added PIL Support
             if importedPillow:
-                self.pilImage = PILIMage.open(pixmap[0])        # Save original to reference & prevent image degradation
+                self.pilImage = PILIMage.open(pixmap[0])  # Save original to reference & prevent image degradation
                 self.img = PILImageTK.PhotoImage(self.pilImage, master=_root)
             else:
                 self.img = tk.PhotoImage(file=pixmap[0], master=_root)
@@ -1044,7 +1191,7 @@ class Image(GraphicsObject):
         path, name = os.path.split(filename)
         ext = name.split(".")[-1]
         self.img.write(filename, format=ext)
-        
+
     # DJC: Added 01.30.19.19.49
     def transform(self, scale=1, angle=0):
         """Resizes and/or Rotates the 'original' image according to the scale/angle passed."""
