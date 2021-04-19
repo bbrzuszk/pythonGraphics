@@ -827,6 +827,9 @@ class Circle(Oval):
 
     def getRadius(self):
         return self.radius
+    
+    def setCenter(self, x, y):
+        self._move(x - self.getCenter().x, y - self.getCenter().y)
 
 
 class Line(_BBox):
