@@ -712,6 +712,18 @@ class Rectangle(_BBox):
         other = Rectangle(self.p1, self.p2)
         other.config = self.config.copy()
         return other
+    
+    @staticmethod   # DJC: Added 04.20.21.14.51
+    def testCollision_RectVsRect(rect1, rect2):
+        """Returns True if the two Rectangles are colliding, False if not."""
+        return rect1.p1.x <= rect2.p2.x and rect1.p2.x >= rect2.p1.x and \
+               rect1.p1.y <= rect2.p2.y and rect1.p2.y >= rect2.p1.y
+
+    @staticmethod   # DJC: Added 04.20.21.14.51
+    def testCollision_RectVsPoint(rect, point):
+        """Returns True if the Point is colliding with the Rectangle, False if not."""
+        return point.x >= rect.p1.x and point.x <= rect.p2.x and \
+               point.y >= rect.p1.y and point.y <= rect.p2.y
 
 
 class RoundedRectangle(Rectangle):  # BB added 3/9/2018
@@ -830,6 +842,20 @@ class Circle(Oval):
     
     def setCenter(self, x, y):
         self._move(x - self.getCenter().x, y - self.getCenter().y)
+        
+    @staticmethod   # DJC: Added 04.20.21.14.51
+    def testCollision_CircleVsCircle(circle1, circle2):
+        """Returns True if the two Circles are colliding, False if not."""
+        c1 = circle1.getCenter()
+        c2 = circle2.getCenter()
+        distanceSquared = (c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2
+        return distanceSquared <= (circle1.radius + circle2.radius) ** 2
+
+    @staticmethod   # DJC: Added 04.20.21.14.51
+    def testCollision_CircleVsPoint(circle, point):
+        """Returns True if the Point is colliding with the Circle, False if not."""
+        distanceSquared = (point.x - circle.getCenter().x) ** 2 + (point.y - circle.getCenter().y) ** 2
+        return distanceSquared <= circle.radius ** 2
 
 
 class Line(_BBox):
@@ -1209,6 +1235,22 @@ class Image(GraphicsObject):
             raise Exception("You need to install the Pillow module to resize/rotate images."
                             "\n           For instructions, see: https://pillow.readthedocs.io/en/3.3.x/installation.html")
     # DJC: End
+    
+    @staticmethod   # DJC: Added 04.20.21.14.51
+    def testCollision_ImageVsImage(image1, image2):
+        """Returns True if the two Images are colliding, False if not."""
+        return image1.anchor.x - image1.getWidth()/2 <= image2.anchor.x + image2.getWidth()/2 and \
+               image1.anchor.x + image1.getWidth()/2 >= image2.anchor.x - image2.getWidth()/2 and \
+               image1.anchor.y - image1.getHeight()/2 <= image2.anchor.y + image2.getHeight()/2 and \
+               image1.anchor.y + image1.getHeight()/2 >= image2.anchor.y - image2.getHeight()/2
+
+    @staticmethod   # DJC: Added 04.20.21.14.51
+    def testCollision_ImageVsPoint(image, point):
+        """Returns True if the Point is colliding with the Image, False if not."""
+        return point.x >= image.anchor.x - image.getWidth()/2 and \
+               point.x <= image.anchor.x + image.getWidth()/2 and \
+               point.y >= image.anchor.y - image.getHeight()/2 and \
+               point.y <= image.anchor.y + image.getHeight()/2
 
 
 def color_rgb(r, g, b):
