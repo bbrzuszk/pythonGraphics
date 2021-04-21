@@ -713,6 +713,15 @@ class Rectangle(_BBox):
         other.config = self.config.copy()
         return other
 
+    def testCollisionCircRect(circle, rectangle):
+        """Returns True if the circle is colliding with the rectangle. False if not."""
+        xClamp = max(rectangle.p1.x, min(rectangle.p2.x, circle.getCenter().x))
+        yClamp = max(rectangle.p1.y, min(rectangle.p2.y, circle.getCenter().y))
+        if math.sqrt((xClamp - circle.getCenter().x)**2 + (yClamp - circle.getCenter().y)**2) <= circle.radius:
+            return True
+        else:
+            return False
+
 
 class RoundedRectangle(Rectangle):  # BB added 3/9/2018
     """Creates a rectangle with rounded corners of a given radius"""
@@ -830,6 +839,15 @@ class Circle(Oval):
     
     def setCenter(self, x, y):
         self._move(x - self.getCenter().x, y - self.getCenter().y)
+
+    def testCollisionCircRect(circle, rectangle):
+        """Returns True if the circle is colliding with the rectangle. False if not."""
+        xClamp = max(rectangle.p1.x, min(rectangle.p2.x, circle.getCenter().x))
+        yClamp = max(rectangle.p1.y, min(rectangle.p2.y, circle.getCenter().y))
+        if math.sqrt((xClamp - circle.getCenter().x)**2 + (yClamp - circle.getCenter().y)**2) <= circle.radius:
+            return True
+        else:
+            return False
 
 
 class Line(_BBox):
