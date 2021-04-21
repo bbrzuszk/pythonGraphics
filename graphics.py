@@ -713,7 +713,7 @@ class Rectangle(_BBox):
         other.config = self.config.copy()
         return other
 
-    def testCollisionCircRect(circle, rectangle):
+    def testCollision_CircleVsRectangle(circle, rectangle):
         """Returns True if the circle is colliding with the rectangle. False if not."""
         xClamp = max(rectangle.p1.x, min(rectangle.p2.x, circle.getCenter().x))
         yClamp = max(rectangle.p1.y, min(rectangle.p2.y, circle.getCenter().y))
@@ -840,7 +840,7 @@ class Circle(Oval):
     def setCenter(self, x, y):
         self._move(x - self.getCenter().x, y - self.getCenter().y)
 
-    def testCollisionCircRect(circle, rectangle):
+    def testCollision_CircleVsRectangle(circle, rectangle):
         """Returns True if the circle is colliding with the rectangle. False if not."""
         xClamp = max(rectangle.p1.x, min(rectangle.p2.x, circle.getCenter().x))
         yClamp = max(rectangle.p1.y, min(rectangle.p2.y, circle.getCenter().y))
