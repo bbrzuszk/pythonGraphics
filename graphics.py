@@ -725,6 +725,15 @@ class Rectangle(_BBox):
         return point.x >= rect.p1.x and point.x <= rect.p2.x and \
                point.y >= rect.p1.y and point.y <= rect.p2.y
 
+    def testCollision_RectangleVsCircle(rectangle, circle):
+        """Returns True if the circle is colliding with the rectangle. False if not."""
+        xClamp = max(rectangle.p1.x, min(rectangle.p2.x, circle.getCenter().x))
+        yClamp = max(rectangle.p1.y, min(rectangle.p2.y, circle.getCenter().y))
+        if math.sqrt((xClamp - circle.getCenter().x)**2 + (yClamp - circle.getCenter().y)**2) <= circle.radius:
+            return True
+        else:
+            return False
+
 
 class RoundedRectangle(Rectangle):  # BB added 3/9/2018
     """Creates a rectangle with rounded corners of a given radius"""
@@ -856,6 +865,15 @@ class Circle(Oval):
         """Returns True if the Point is colliding with the Circle, False if not."""
         distanceSquared = (point.x - circle.getCenter().x) ** 2 + (point.y - circle.getCenter().y) ** 2
         return distanceSquared <= circle.radius ** 2
+
+    def testCollision_CircleVsRectangle(circle, rectangle):
+        """Returns True if the circle is colliding with the rectangle. False if not."""
+        xClamp = max(rectangle.p1.x, min(rectangle.p2.x, circle.getCenter().x))
+        yClamp = max(rectangle.p1.y, min(rectangle.p2.y, circle.getCenter().y))
+        if math.sqrt((xClamp - circle.getCenter().x)**2 + (yClamp - circle.getCenter().y)**2) <= circle.radius:
+            return True
+        else:
+            return False
 
 
 class Line(_BBox):
