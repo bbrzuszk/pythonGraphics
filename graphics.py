@@ -840,8 +840,8 @@ class Circle(Oval):
     def getRadius(self):
         return self.radius
     
-    def setCenter(self, x, y):
-        self._move(x - self.getCenter().x, y - self.getCenter().y)
+    def setCenter(self, point): # DJC: Added 04.21.21.18.51
+        self._move(point.x - self.getCenter().x, point.y - self.getCenter().y)
         
     @staticmethod   # DJC: Added 04.20.21.14.51
     def testCollision_CircleVsCircle(circle1, circle2):
