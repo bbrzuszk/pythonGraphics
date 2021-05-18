@@ -477,7 +477,16 @@ class GraphWin(tk.Canvas):
 
     def getCurrentMouseLocation(self):
         return Point(self.currentMouseX, self.currentMouseY)
-    # DJC: end
+    # DJC: end    
+    
+    # NIS: Added 05.17.21.23.44
+    def setWindowIcon(self, path):
+        try:
+            icon = tk.PhotoImage(file=path)
+            self.master.iconphoto(False, icon)
+        except Exception as e:
+            print(e)
+    # NIS: end
 
 
 class Transform:
