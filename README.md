@@ -7,6 +7,9 @@ This library give students the abilty to create basic shapes, widgets, and anima
 ## How To Use
 Place the graphics.py file in the same directory as your current project that is using the library.  To use the classes of the library, best practice is to import it into your current project by typing from graphics import * as the first line of code in your python file. This will give you access to the graphics module in your current python file and any file the imports from that file.
 
+## Update: Added Get Methods
+Added get methods for various attributes of graphics objects.  Get methods include: getFill(), getOutline(), getActiveFill(), getWidth()
+
 ## Update: Basic Collision Detection Added
 Static methods for collision detection have been added to class Rectangle and class Circle.  Check the Wiki for more specific information on how to use them.
 
