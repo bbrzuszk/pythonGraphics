@@ -1,7 +1,7 @@
 # Python Graphics 
 
 ## Summary 
-This library give students the abilty to create basic shapes, widgets, and animations through an easy to use graphic library.  The general documentation for this library can be found in the this repository or at http://mcsp.wartburg.edu/zelle/python/graphics/graphics.pdf.  Use the documentation to navigate the different classes and functions with those classes to produce graphics of any kind.  Check here for recent additions to the library and explaination for the implementation of those additions.  
+This library give students the abilty to create basic shapes, widgets, and animations through an easy to use graphic library.  The general documentation for this library can be found in the this repository or at http://mcsp.wartburg.edu/zelle/python/graphics/graphics.pdf.  Use the documentation to navigate the different classes and functions with those classes to produce graphics of any kind.  Check the wiki for recent additions to the library and explaination for the implementation of those additions.  
 
 
 ## How To Use
