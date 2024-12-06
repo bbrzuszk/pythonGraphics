@@ -555,16 +555,32 @@ class GraphicsObject:
         """Set interior color to color"""
         self._reconfig("fill", color)
 
+    def getFill(self):
+        """Returns the current fill color of the graphics object"""
+        return self.config["fill"]
+
     def setOutline(self, color):
         """Set outline color to color"""
         self._reconfig("outline", color)
+
+    def getOutline(self):
+        """returns the current outline color of the graphics object"""
+        return self.config["outline"]
 
     def setWidth(self, width):
         """Set line weight to width"""
         self._reconfig("width", width)
 
+    def getWidth(self):
+        """Returns the current outline width of the graphics object"""
+        return self.config["width"]
+
     def setActiveFill(self, color):  # Added By BB 3/8
         self._reconfig("activefill", color)
+
+    def getActiveFill(self):
+        """Returns the active fill of the current graphics object"""
+        return self.config["activefill"]
 
     def setSmooth(self, bool):  # Niss: added 1.05.2017
         """Set smooth boolean to bool"""
